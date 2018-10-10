@@ -1,0 +1,207 @@
+diff --git a/content.php b/content.php
+index 028dd10..1f8b8cd 100644
+--- a/content.php
++++ b/content.php
+@@ -3,9 +3,17 @@
+ 	<?php if ( get_the_title() ) : ?>
+ 		
+ 		<h2 class="post-title"><a href="<?php the_permalink(); ?>" rel="bookmark" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a></h2>
+-
+ 	<?php endif; ?>
+-    
++    	<h4 class="post-author-container"> 
++        	<?php
++            if(function_exists( 'coauthors_posts_links' )) {
++            	coauthors_posts_links();
++            }
++        	else {
++            	the_author();
++            }
++            ?>
++        </h4>
+     <?php if ( is_sticky() ) echo '<span class="sticky-post">' . __( 'Sticky post', 'baskerville' ) . '</span>'; ?>
+     
+ </div><!-- .post-header -->
+diff --git a/functions.php b/functions.php
+index 63e6a27..314b5b0 100644
+--- a/functions.php
++++ b/functions.php
+@@ -611,6 +611,18 @@ class baskerville_Customize {
+ 
+ // Setup the Theme Customizer settings and controls...
+ add_action( 'customize_register' , array( 'baskerville_Customize' , 'register' ) );
+-
+-
++function add_articles_to_homepage( $query ) {
++if ( !is_admin() && is_home() && $query->is_main_query() ) {
++$query->set( 'post_type', array( 'post', 'article') );
++}
++return $query;
++}
++add_action( 'pre_get_posts', 'add_articles_to_homepage' );
++function issuem_post_author_archive( &$query )
++{
++    if ( $query->is_author )
++        $query->set( 'post_type', 'article' && 'post' );	
++    //remove_action( 'pre_get_posts', 'issuem_post_author_archive' ); // run once!
++}
++add_action( 'pre_get_posts', 'issuem_post_author_archive' );
+ ?>
+\ No newline at end of file
+diff --git a/single.php b/single.php
+index d4c1aa0..fba03b2 100644
+--- a/single.php
++++ b/single.php
+@@ -45,6 +45,7 @@
+ 						    <h1 class="post-title"><a href="<?php the_permalink(); ?>" rel="bookmark" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a></h1>
+ 
+ 						<?php endif; ?>
++                         
+ 					    
+ 					</div><!-- .post-header -->
+ 					
+@@ -137,6 +138,7 @@
+ 					<?php endif; ?>
+ 														                                    	    
+ 					<div class="post-content">
++        
+ 						
+ 						<?php 
+ 						if ( $format == 'link' || $format == 'quote' || $format == 'video' ) { 
+@@ -158,10 +160,12 @@
+ 						<div class="post-author">
+ 						
+ 							<div class="post-author-content">
+-							
+-								<h4><?php the_author_meta( 'display_name' ); ?></h4>
+-								
+-								<?php 
++                                <a href="<?php echo get_author_posts_url( get_the_author_meta( 'ID' ) ); ?>">
++                               		 <h4>
++                               			 <?php the_author_meta( 'display_name' ); ?>
++                               		 </h4>
++                                </a>
++                                <?php 
+ 								
+ 								if ( get_the_author_meta( 'description' ) ) { 
+ 									echo wpautop( get_the_author_meta( 'description' ) );
+diff --git a/style.css b/style.css
+index edcc63a..1795bea 100644
+--- a/style.css
++++ b/style.css
+@@ -31,7 +31,7 @@
+ 	12.	Footer
+ 	13. Credits
+ 	14.	Responsive
+-
++	15. Custom CSS
+ ----------------------------------------------------------------------------------- */
+ 
+ 
+@@ -293,7 +293,7 @@ body a {
+ /* -------------------------------------------------------------------------------- */
+ 
+ 
+-.header { padding: 70px 0; }
++.header { padding: 27px 0; }
+ 
+ .header .cover { background: rgba(29,29,29,0.25); }
+ 
+@@ -304,7 +304,7 @@ body a {
+ .header .logo { display: inline-block; }
+ 
+ .header .logo img {
+-	max-height: 80px;
++	max-height: 103px;
+ 	width: auto;
+ }
+ 
+@@ -652,6 +652,7 @@ body a {
+ 	position: relative; 
+ 	padding: 8% 10%;
+ 	border-bottom: 1px solid #eee;
++	
+ }
+ 
+ .post-header .post-title {
+@@ -1066,21 +1067,18 @@ a.post-nav-next:hover { background-image: url(images/icons/1x/next-c.png); }
+ 	border-left-color: #13C4A5;
+ 	border-right-color: #13C4A5;
+ }
+-
+-.post-author-content { margin-left: 70px; }
+-
+-.post-author h4 {
+-	font-family: 'Roboto Slab', sans-serif;
+-	font-size: 1.1em;
+-	font-weight: 700;
+-	color: #fff;
+-	margin-bottom: 15px;
++.post-author-content { 
++	margin-left: 70px;
++	font-size: 1.2em;
++    color: white;
+ }
+ 
+ .post-author p {
+ 	font-size: 0.875em;
+ 	line-height: 150%;
+-	color: #9499A0;
++ine-height: 120%;
++	font-weight: 700;
++	color: #2B3542;
+ }
+ 
+ .author-links { margin-top: 18px; }
+@@ -1112,7 +1110,6 @@ a.post-nav-next:hover { background-image: url(images/icons/1x/next-c.png); }
+ /*	7. Post content
+ /* -------------------------------------------------------------------------------- */
+ 
+-
+ .post-content a:hover { text-decoration: underline; }
+ 
+ .post-content p,
+@@ -2060,6 +2057,9 @@ p.form-submit { margin-top: 30px; }
+ 	font-style: italic;
+ }
+ 
++.page-title.section-inner {
++	color: white;
++}
+ 
+ /* archive navigation */
+ 
+@@ -2914,4 +2914,32 @@ img#wpstats { display: none; } /* Silly WordPress stats */
+ 	.comment-form textarea { height: 150px; }
+ 	
+ 	
++}
++/*--------- Custom CSS ----------*/
++
++/*Chagne color of author name on his/her page for better visibility (default color #333) */
++.page-title.section-inner h3 {
++	color: white;
++}
++
++/* To hide ugly archive box under author's name on his/her page */
++.author-links {
++	display: none;
++}
++/* Change font to match title font */
++.post-author-container {
++	padding-top: 5%;
++	font-family: 'Roboto Slab', sans-serif;
++	font-size: 0.9em;
++}
++.post-title a {
++	padding-top: 0;
++}
++/* Change text color to match text color around */
++.post-author-content a {
++	color: #999;
++}
++/* Change hover color to match links color */
++.post-author-content h4 a:hover {
++	color: #13C4A5;
+ }
+\ No newline at end of file
